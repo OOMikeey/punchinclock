@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punch In/Out</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <label for="lastName">Last Name:</label>
+    <input type="text" id="lastName" name="lastName">
+
+    <label for="firstInitial">First Initial:</label>
+    <input type="text" id="firstInitial" name="firstInitial">
+
+    <label for="shift">Shift:</label>
+    <select id="shift" name="shift">
+        <option value="morning">Morning</option>
+        <option value="swing">Swing</option>
+        <option value="day">Day</option>
+    </select>
+
+    <!-- Text area for comment -->
+    <label for="comment">Comment:</label>
+    <textarea id="comment" name="comment" rows="4" cols="50"></textarea>
+
+    <!-- Button to punch in -->
+    <button onclick="recordPunch('in')">Punch In</button>
+
+    <!-- Button to punch out -->
+    <button onclick="recordPunch('out')">Punch Out</button>
+
+    <!-- Button to download text file -->
+    <button onclick="downloadTextFile()">Download Text File</button>
+
+    <!-- Table to display recorded punch-ins and punch-outs -->
+    <table id="punchTable">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Last Name</th>
+                <th>First Initial</th>
+                <th>Shift</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Punch data will be added here dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        // Function to load punches from local storage
+        function loadPunches() {
+            const punches = JSON.parse(localStorage.getItem('punches')) || [];
+            const tbody = document.getElementById('punchTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            punches.forEach(punch => {
+                const newRow = "<tr><td>" + punch.type + "</td><td>" + punch.date + "</td><td>" + punch.time + "</td><td>" + punch.lastName + "</td><td>" + punch.firstInitial + "</td><td>" + punch.shift + "</td><td>" + punch.comment + "</td></tr>";
+                tbody.innerHTML += newRow;
+            });
+        }
+
+        function recordPunch(type) {
+            // Get current date and time
+            var now = new Date();
+            var date = now.toDateString(); // Format: Day Month Date Year
+            var time = now.toLocaleTimeString(); // Format: HH:MM:SS AM/PM
+
+            // Get user input values
+            var lastName = document.getElementById('lastName').value;
+            var firstInitial = document.getElementById('firstInitial').value;
+            var shift = document.getElementById('shift').value;
+            var comment = document.getElementById('comment').value;
+
+            // Determine punch type
+            var punchType = type === 'in' ? 'Punch In' : 'Punch Out';
+
+            // Create punch object
+            var punch = {
+                type: punchType,
+                date: date,
+                time: time,
+                lastName: lastName,
+                firstInitial: firstInitial,
+                shift: shift,
+                comment: comment
+            };
+
+            // Save punch to local storage
+            const punches = JSON.parse(localStorage.getItem('punches')) || [];
+            punches.push(punch);
+            localStorage.setItem('punches', JSON.stringify(punches));
+
+            // Add new row to the table
+            var newRow = "<tr><td>" + punchType + "</td><td>" + date + "</td><td>" + time + "</td><td>" + lastName + "</td><td>" + firstInitial + "</td><td>" + shift + "</td><td>" + comment + "</td></tr>";
+            document.getElementById('punchTable').getElementsByTagName('tbody')[0].innerHTML += newRow;
+
+            // Clear input fields
+            document.getElementById('comment').value = '';
+
+            // Display alert
+            alert(punchType + ' recorded successfully!');
+        }
+
+        function downloadTextFile() {
+            const punches = JSON.parse(localStorage.getItem('punches')) || [];
+            if (punches.length === 0) {
+                alert('No punch data to export');
+                return;
+            }
+
+            let textContent = 'Type,Date,Time,Last Name,First Initial,Shift,Comment\n';
+            punches.forEach(punch => {
+                textContent += `${punch.type},${punch.date},${punch.time},${punch.lastName},${punch.firstInitial},${punch.shift},${punch.comment}\n`;
+            });
+
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'punches.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Load punches when the page loads
+        window.onload = loadPunches;
+    </script>
+</body>
+</html>
